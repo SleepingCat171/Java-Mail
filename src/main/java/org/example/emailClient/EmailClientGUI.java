@@ -1,6 +1,7 @@
 package org.example.emailClient;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.ArrayList;
@@ -16,7 +17,7 @@ public class EmailClientGUI extends JFrame {
     private String trashFolderName;
 
     public EmailClientGUI() {
-        setTitle("Email Client");
+        setTitle("GenGuMail");
         setSize(1000, 700);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
@@ -28,66 +29,129 @@ public class EmailClientGUI extends JFrame {
             System.exit(1);
         }
 
+        Border roundedBorder = BorderFactory.createLineBorder(new Color(200, 200, 200), 2, true);
+
+        // top bar
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setBackground(new Color(255, 255, 255)); // Pastel trắng
+        topPanel.setBorder(BorderFactory.createCompoundBorder(roundedBorder, BorderFactory.createEmptyBorder(10, 10, 10, 10)));
+
+        // logo + AppName bar
+        JPanel logoAndNamePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        logoAndNamePanel.setBackground(new Color(255, 255, 255));
+
+        // logo
+        JLabel logoLabel = new JLabel();
+        try {
+            ImageIcon logoIcon = new ImageIcon(getClass().getClassLoader().getResource("logo.png"));
+            Image logoImage = logoIcon.getImage().getScaledInstance(50, 50, Image.SCALE_SMOOTH);
+            logoLabel.setIcon(new ImageIcon(logoImage));
+        } catch (Exception e) {
+            logoLabel.setText("Logo not found");
+            e.printStackTrace();
+        }
+        logoAndNamePanel.add(logoLabel);
+
+        // App name
+        JLabel appNameLabel = new JLabel("GenGuMail");
+        appNameLabel.setFont(new Font("Arial", Font.BOLD, 20));
+        appNameLabel.setForeground(new Color(0, 0, 0));
+        logoAndNamePanel.add(appNameLabel);
+
+        topPanel.add(logoAndNamePanel, BorderLayout.WEST);
+
+        // left bar
         JPanel sidebar = new JPanel();
         sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
-        sidebar.setBackground(new Color(240, 240, 240));
+        sidebar.setBackground(new Color(200, 230, 201)); 
         sidebar.setPreferredSize(new Dimension(200, 0));
+        sidebar.setBorder(roundedBorder);
+
+        Font buttonFont = new Font("Arial", Font.PLAIN, 16);
 
         composeButton = new JButton("Soạn thư");
-        composeButton.setBackground(new Color(26, 115, 232));
+        composeButton.setBackground(new Color(129, 212, 250)); 
         composeButton.setForeground(Color.WHITE);
-        composeButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, composeButton.getMinimumSize().height));
+        composeButton.setFont(buttonFont);
+        composeButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50)); 
+        composeButton.setBorder(BorderFactory.createCompoundBorder(roundedBorder, BorderFactory.createEmptyBorder(10, 10, 10, 10)));
         sidebar.add(composeButton);
         sidebar.add(Box.createVerticalStrut(10));
 
         inboxButton = new JButton("Hộp thư đến");
-        inboxButton.setBackground(new Color(200, 200, 200));
-        inboxButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, inboxButton.getMinimumSize().height));
+        inboxButton.setBackground(new Color(220, 237, 200)); 
+        inboxButton.setFont(buttonFont);
+        inboxButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
+        inboxButton.setBorder(BorderFactory.createCompoundBorder(roundedBorder, BorderFactory.createEmptyBorder(10, 10, 10, 10)));
         sidebar.add(inboxButton);
 
         sentButton = new JButton("Đã gửi");
-        sentButton.setBackground(new Color(200, 200, 200));
-        sentButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, sentButton.getMinimumSize().height));
+        sentButton.setBackground(new Color(220, 237, 200));
+        sentButton.setFont(buttonFont);
+        sentButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
+        sentButton.setBorder(BorderFactory.createCompoundBorder(roundedBorder, BorderFactory.createEmptyBorder(10, 10, 10, 10)));
         sidebar.add(sentButton);
 
         trashButton = new JButton("Thùng rác");
-        trashButton.setBackground(new Color(200, 200, 200));
-        trashButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, trashButton.getMinimumSize().height));
+        trashButton.setBackground(new Color(220, 237, 200));
+        trashButton.setFont(buttonFont);
+        trashButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
+        trashButton.setBorder(BorderFactory.createCompoundBorder(roundedBorder, BorderFactory.createEmptyBorder(10, 10, 10, 10)));
         sidebar.add(trashButton);
 
+        // email list
         String[] columnNames = {"From", "Subject", "Date"};
         tableModel = new DefaultTableModel(columnNames, 0);
         emailTable = new JTable(tableModel);
         emailTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        emailTable.setBackground(new Color(245, 245, 245));
+        emailTable.setBackground(new Color(245, 245, 220)); 
         emailTable.setRowHeight(30);
+        emailTable.setBorder(roundedBorder);
         emailMessages = new ArrayList<>();
 
         JScrollPane tableScrollPane = new JScrollPane(emailTable);
-        tableScrollPane.setBackground(Color.WHITE);
+        tableScrollPane.setBackground(new Color(245, 245, 220));
+        tableScrollPane.setBorder(roundedBorder);
 
-        // Thanh công cụ phía trên bảng email
         JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        toolbar.setBackground(Color.WHITE);
-        refreshButton = new JButton("Refresh");
-        refreshButton.setBackground(new Color(26, 115, 232));
-        refreshButton.setForeground(Color.WHITE);
-        toolbar.add(refreshButton);
-
-        deleteButton = new JButton("Delete");
-        deleteButton.setBackground(new Color(200, 0, 0));
-        deleteButton.setForeground(Color.WHITE);
-        toolbar.add(deleteButton);
+        toolbar.setBackground(new Color(255, 255, 255));
+        toolbar.setBorder(BorderFactory.createCompoundBorder(roundedBorder, BorderFactory.createEmptyBorder(5, 5, 5, 5)));
 
         restoreButton = new JButton("Restore");
-        restoreButton.setBackground(new Color(0, 150, 0));
+        restoreButton.setBackground(new Color(165, 214, 167)); 
         restoreButton.setForeground(Color.WHITE);
+        restoreButton.setFont(buttonFont);
+        restoreButton.setPreferredSize(new Dimension(120, 40)); 
+        restoreButton.setBorder(roundedBorder);
         restoreButton.setVisible(false);
         toolbar.add(restoreButton);
 
+        // bottom bar
+        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        bottomPanel.setBackground(new Color(255, 255, 255));
+        bottomPanel.setBorder(BorderFactory.createCompoundBorder(roundedBorder, BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+
+        deleteButton = new JButton("Delete");
+        deleteButton.setBackground(new Color(255, 152, 152)); 
+        deleteButton.setForeground(Color.WHITE);
+        deleteButton.setFont(buttonFont);
+        deleteButton.setPreferredSize(new Dimension(120, 40)); 
+        deleteButton.setBorder(roundedBorder);
+        bottomPanel.add(deleteButton);
+
+        refreshButton = new JButton("Refresh");
+        refreshButton.setBackground(new Color(129, 212, 250));
+        refreshButton.setForeground(Color.WHITE);
+        refreshButton.setFont(buttonFont);
+        refreshButton.setPreferredSize(new Dimension(120, 40)); 
+        refreshButton.setBorder(roundedBorder);
+        bottomPanel.add(refreshButton);
+
+        add(topPanel, BorderLayout.NORTH);
         add(sidebar, BorderLayout.WEST);
-        add(toolbar, BorderLayout.NORTH);
+        add(toolbar, BorderLayout.CENTER);
         add(tableScrollPane, BorderLayout.CENTER);
+        add(bottomPanel, BorderLayout.SOUTH);
 
         composeButton.addActionListener(e -> showComposeWindow());
 
@@ -128,6 +192,8 @@ public class EmailClientGUI extends JFrame {
                         SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(this, "Error deleting email."));
                     }
                 }).start();
+            } else {
+                JOptionPane.showMessageDialog(this, "Please select an email to delete.");
             }
         });
 
@@ -139,6 +205,7 @@ public class EmailClientGUI extends JFrame {
                     if (success) {
                         SwingUtilities.invokeLater(() -> {
                             JOptionPane.showMessageDialog(this, "Email restored to Inbox!");
+                            restoreButton.setVisible(false);
                             refreshInbox();
                         });
                     } else {
@@ -195,27 +262,50 @@ public class EmailClientGUI extends JFrame {
 
         JPanel composePanel = new JPanel();
         composePanel.setLayout(new BoxLayout(composePanel, BoxLayout.Y_AXIS));
-        composePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        composePanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(200, 200, 200), 2, true),
+                BorderFactory.createEmptyBorder(10, 20, 10, 10) // Xích sang trái bằng cách tăng padding bên trái
+        ));
+        composePanel.setBackground(new Color(245, 245, 220));
 
-        composePanel.add(new JLabel("To:"));
+        JPanel toPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        toPanel.setBackground(new Color(245, 245, 220));
+        toPanel.add(new JLabel("To:"));
         JTextField toField = new JTextField(30);
-        composePanel.add(toField);
+        toPanel.add(toField);
+        composePanel.add(toPanel);
 
         composePanel.add(Box.createVerticalStrut(5));
-        composePanel.add(new JLabel("Subject:"));
+
+        JPanel subjectPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        subjectPanel.setBackground(new Color(245, 245, 220));
+        subjectPanel.add(new JLabel("Subject:"));
         JTextField subjectField = new JTextField(30);
-        composePanel.add(subjectField);
+        subjectPanel.add(subjectField);
+        composePanel.add(subjectPanel);
 
         composePanel.add(Box.createVerticalStrut(5));
-        composePanel.add(new JLabel("Message:"));
+
+        JPanel messagePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        messagePanel.setBackground(new Color(245, 245, 220));
+        messagePanel.add(new JLabel("Message:"));
+        composePanel.add(messagePanel);
+
         JTextArea messageArea = new JTextArea(10, 30);
+        messageArea.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 2, true));
         composePanel.add(new JScrollPane(messageArea));
 
+        JPanel sendButtonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        sendButtonPanel.setBackground(new Color(245, 245, 220));
         JButton sendButton = new JButton("Send");
-        sendButton.setBackground(new Color(26, 115, 232));
+        sendButton.setBackground(new Color(129, 212, 250));
         sendButton.setForeground(Color.WHITE);
+        sendButton.setFont(new Font("Arial", Font.PLAIN, 16));
+        sendButton.setPreferredSize(new Dimension(120, 40)); // Tăng kích thước nút
+        sendButton.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 2, true));
+        sendButtonPanel.add(sendButton);
         composePanel.add(Box.createVerticalStrut(5));
-        composePanel.add(sendButton);
+        composePanel.add(sendButtonPanel);
 
         composeFrame.add(composePanel, BorderLayout.CENTER);
 
@@ -223,10 +313,9 @@ public class EmailClientGUI extends JFrame {
             String to = toField.getText();
             String subject = subjectField.getText();
             String message = messageArea.getText();
-            EmailSender.sendEmail(to, subject, message);
+            EmailSender.sendEmail(to, subject, message); 
             JOptionPane.showMessageDialog(composeFrame, "Email sent!");
             composeFrame.dispose();
-            // 2sec to sync
             try {
                 Thread.sleep(2000);
             } catch (InterruptedException ex) {
@@ -249,6 +338,8 @@ public class EmailClientGUI extends JFrame {
                 "Subject: " + email.getSubject() + "\n" +
                 "Date: " + email.getDate() + "\n" +
                 "Content: " + email.getContent());
+        detailArea.setBackground(new Color(245, 245, 220));
+        detailArea.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 2, true));
 
         detailFrame.add(new JScrollPane(detailArea), BorderLayout.CENTER);
         detailFrame.setVisible(true);
