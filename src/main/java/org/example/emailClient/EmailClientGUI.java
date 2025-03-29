@@ -33,10 +33,9 @@ public class EmailClientGUI extends JFrame {
 
         // top bar
         JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.setBackground(new Color(255, 255, 255)); // Pastel trắng
+        topPanel.setBackground(new Color(255, 255, 255));
         topPanel.setBorder(BorderFactory.createCompoundBorder(roundedBorder, BorderFactory.createEmptyBorder(10, 10, 10, 10)));
 
-        // logo + AppName bar
         JPanel logoAndNamePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         logoAndNamePanel.setBackground(new Color(255, 255, 255));
 
@@ -99,7 +98,6 @@ public class EmailClientGUI extends JFrame {
         trashButton.setBorder(BorderFactory.createCompoundBorder(roundedBorder, BorderFactory.createEmptyBorder(10, 10, 10, 10)));
         sidebar.add(trashButton);
 
-        // email list
         String[] columnNames = {"From", "Subject", "Date"};
         tableModel = new DefaultTableModel(columnNames, 0);
         emailTable = new JTable(tableModel);
@@ -114,7 +112,7 @@ public class EmailClientGUI extends JFrame {
         tableScrollPane.setBorder(roundedBorder);
 
         JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        toolbar.setBackground(new Color(255, 255, 255));
+        toolbar.setBackground(new Color(245, 245, 220));
         toolbar.setBorder(BorderFactory.createCompoundBorder(roundedBorder, BorderFactory.createEmptyBorder(5, 5, 5, 5)));
 
         restoreButton = new JButton("Restore");
@@ -183,14 +181,20 @@ public class EmailClientGUI extends JFrame {
             if (selectedRow >= 0 && selectedRow < emailMessages.size()) {
                 new Thread(() -> {
                     boolean success = EmailManager.deleteEmail(emailMessages.get(selectedRow), currentFolder);
-                    if (success) {
-                        SwingUtilities.invokeLater(() -> {
+                    SwingUtilities.invokeLater(() -> {
+                        if (success) {
                             JOptionPane.showMessageDialog(this, "Email moved to Trash!");
+                            // 3 sec to sync
+                            try {
+                                Thread.sleep(3000);
+                            } catch (InterruptedException ex) {
+                                ex.printStackTrace();
+                            }
                             refreshInbox();
-                        });
-                    } else {
-                        SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(this, "Error deleting email."));
-                    }
+                        } else {
+                            JOptionPane.showMessageDialog(this, "Error deleting email.");
+                        }
+                    });
                 }).start();
             } else {
                 JOptionPane.showMessageDialog(this, "Please select an email to delete.");
@@ -202,18 +206,24 @@ public class EmailClientGUI extends JFrame {
             if (selectedRow >= 0 && selectedRow < emailMessages.size()) {
                 new Thread(() -> {
                     boolean success = EmailManager.restoreEmail(emailMessages.get(selectedRow));
-                    if (success) {
-                        SwingUtilities.invokeLater(() -> {
+                    SwingUtilities.invokeLater(() -> {
+                        if (success) {
                             JOptionPane.showMessageDialog(this, "Email restored to Inbox!");
                             restoreButton.setVisible(false);
+                            try {
+                                Thread.sleep(3000);
+                            } catch (InterruptedException ex) {
+                                ex.printStackTrace();
+                            }
                             refreshInbox();
-                        });
-                    } else {
-                        SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(this, "Error restoring email."));
-                    }
+                        } else {
+                            JOptionPane.showMessageDialog(this, "Error restoring email.");
+                        }
+                    });
                 }).start();
             }
         });
+
 
         emailTable.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
@@ -233,10 +243,11 @@ public class EmailClientGUI extends JFrame {
         new Thread(() -> {
             try {
                 List<String[]> emailSummaries = new ArrayList<>();
+                emailMessages.clear(); 
                 emailMessages = EmailReceiver.fetchEmails(emailSummaries, currentFolder);
                 System.out.println("Fetched " + emailSummaries.size() + " emails");
                 SwingUtilities.invokeLater(() -> {
-                    tableModel.setRowCount(0);
+                    tableModel.setRowCount(0); 
                     for (String[] summary : emailSummaries) {
                         if (summary[0].startsWith("Error")) {
                             continue;
@@ -247,10 +258,14 @@ public class EmailClientGUI extends JFrame {
                         tableModel.addRow(new String[]{"No emails", "", ""});
                     }
                     System.out.println("Table updated with " + tableModel.getRowCount() + " rows");
+                    emailTable.revalidate();
+                    emailTable.repaint(); 
                 });
             } catch (Exception ex) {
                 ex.printStackTrace();
-                JOptionPane.showMessageDialog(this, "Error refreshing inbox: " + ex.getMessage());
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(this, "Error refreshing inbox: " + ex.getMessage());
+                });
             }
         }).start();
     }
@@ -264,7 +279,7 @@ public class EmailClientGUI extends JFrame {
         composePanel.setLayout(new BoxLayout(composePanel, BoxLayout.Y_AXIS));
         composePanel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(200, 200, 200), 2, true),
-                BorderFactory.createEmptyBorder(10, 20, 10, 10) // Xích sang trái bằng cách tăng padding bên trái
+                BorderFactory.createEmptyBorder(10, 20, 10, 10) 
         ));
         composePanel.setBackground(new Color(245, 245, 220));
 
@@ -301,7 +316,7 @@ public class EmailClientGUI extends JFrame {
         sendButton.setBackground(new Color(129, 212, 250));
         sendButton.setForeground(Color.WHITE);
         sendButton.setFont(new Font("Arial", Font.PLAIN, 16));
-        sendButton.setPreferredSize(new Dimension(120, 40)); // Tăng kích thước nút
+        sendButton.setPreferredSize(new Dimension(120, 40)); 
         sendButton.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 2, true));
         sendButtonPanel.add(sendButton);
         composePanel.add(Box.createVerticalStrut(5));
@@ -313,7 +328,7 @@ public class EmailClientGUI extends JFrame {
             String to = toField.getText();
             String subject = subjectField.getText();
             String message = messageArea.getText();
-            EmailSender.sendEmail(to, subject, message); 
+            EmailSender.sendEmail(to, subject, message);
             JOptionPane.showMessageDialog(composeFrame, "Email sent!");
             composeFrame.dispose();
             try {

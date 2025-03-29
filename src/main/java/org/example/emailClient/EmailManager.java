@@ -71,12 +71,16 @@ public class EmailManager {
         props.put("mail.imaps.port", config.getProperty("imap.port"));
         props.put("mail.imaps.ssl.enable", "true");
 
+        Store store = null;
+        Folder sourceFolder = null;
+        Folder trashFolder = null;
+
         try {
             Session session = Session.getInstance(props, null);
-            Store store = session.getStore("imaps");
+            store = session.getStore("imaps");
             store.connect(username, password);
 
-            Folder sourceFolder = store.getFolder(currentFolder);
+            sourceFolder = store.getFolder(currentFolder);
             sourceFolder.open(Folder.READ_WRITE);
 
             String trashFolderName = getFolderName("Trash");
@@ -84,38 +88,65 @@ public class EmailManager {
                 System.out.println("Trash folder not found");
                 return false;
             }
-            Folder trashFolder = store.getFolder(trashFolderName);
+            trashFolder = store.getFolder(trashFolderName);
             trashFolder.open(Folder.READ_WRITE);
 
             Message[] messages = sourceFolder.getMessages();
             Message targetMessage = null;
             for (Message msg : messages) {
-                if (msg.getFrom()[0].toString().equals(email.getFrom()) &&
-                        msg.getSubject().equals(email.getSubject()) &&
-                        (msg.getSentDate() != null && msg.getSentDate().toString().equals(email.getDate()))) {
+                String msgFrom = msg.getFrom()[0].toString();
+                String msgSubject = msg.getSubject() != null ? msg.getSubject() : "";
+                String emailSubject = email.getSubject() != null ? email.getSubject() : "";
+
+                System.out.println("Comparing email: ");
+                System.out.println("From: " + msgFrom + " | Expected: " + email.getFrom());
+                System.out.println("Subject: " + msgSubject + " | Expected: " + emailSubject);
+
+                if (msgFrom.equals(email.getFrom()) && msgSubject.equals(emailSubject)) {
                     targetMessage = msg;
                     break;
                 }
             }
 
             if (targetMessage != null) {
+                System.out.println("Found email to delete: " + targetMessage.getSubject());
                 sourceFolder.copyMessages(new Message[]{targetMessage}, trashFolder);
-                targetMessage.setFlag(Flags.Flag.DELETED, true);
-                sourceFolder.expunge();
-                sourceFolder.close(false);
-                trashFolder.close(false);
-                store.close();
-                return true;
+
+                Message[] trashMessages = trashFolder.getMessages();
+                boolean foundInTrash = false;
+                for (Message trashMsg : trashMessages) {
+                    String trashMsgFrom = trashMsg.getFrom()[0].toString();
+                    String trashMsgSubject = trashMsg.getSubject() != null ? trashMsg.getSubject() : "";
+                    if (trashMsgFrom.equals(email.getFrom()) && trashMsgSubject.equals(email.getSubject())) {
+                        foundInTrash = true;
+                        break;
+                    }
+                }
+
+                if (foundInTrash) {
+                    System.out.println("Email successfully moved to Trash.");
+                    return true;
+                } else {
+                    System.out.println("Email not found in Trash after moving.");
+                    return false;
+                }
+            } else {
+                System.out.println("Could not find email to delete.");
+                return false;
             }
 
-            sourceFolder.close(false);
-            trashFolder.close(false);
-            store.close();
-            return false;
-
         } catch (Exception e) {
+            System.out.println("Error deleting email: " + e.getMessage());
             e.printStackTrace();
             return false;
+        } finally {
+            try {
+                if (sourceFolder != null && sourceFolder.isOpen()) sourceFolder.close(false);
+                if (trashFolder != null && trashFolder.isOpen()) trashFolder.close(false);
+                if (store != null && store.isConnected()) store.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -132,9 +163,13 @@ public class EmailManager {
         props.put("mail.imaps.port", config.getProperty("imap.port"));
         props.put("mail.imaps.ssl.enable", "true");
 
+        Store store = null;
+        Folder trashFolder = null;
+        Folder inboxFolder = null;
+
         try {
             Session session = Session.getInstance(props, null);
-            Store store = session.getStore("imaps");
+            store = session.getStore("imaps");
             store.connect(username, password);
 
             String trashFolderName = getFolderName("Trash");
@@ -142,18 +177,19 @@ public class EmailManager {
                 System.out.println("Trash folder not found");
                 return false;
             }
-            Folder trashFolder = store.getFolder(trashFolderName);
+            trashFolder = store.getFolder(trashFolderName);
             trashFolder.open(Folder.READ_WRITE);
 
-            Folder inboxFolder = store.getFolder("INBOX");
+            inboxFolder = store.getFolder("INBOX");
             inboxFolder.open(Folder.READ_WRITE);
 
             Message[] messages = trashFolder.getMessages();
             Message targetMessage = null;
             for (Message msg : messages) {
-                if (msg.getFrom()[0].toString().equals(email.getFrom()) &&
-                        msg.getSubject().equals(email.getSubject()) &&
-                        (msg.getSentDate() != null && msg.getSentDate().toString().equals(email.getDate()))) {
+                String msgFrom = msg.getFrom()[0].toString();
+                String msgSubject = msg.getSubject() != null ? msg.getSubject() : "";
+                String emailSubject = email.getSubject() != null ? email.getSubject() : "";
+                if (msgFrom.equals(email.getFrom()) && msgSubject.equals(emailSubject)) {
                     targetMessage = msg;
                     break;
                 }
@@ -161,22 +197,22 @@ public class EmailManager {
 
             if (targetMessage != null) {
                 trashFolder.copyMessages(new Message[]{targetMessage}, inboxFolder);
-                targetMessage.setFlag(Flags.Flag.DELETED, true);
-                trashFolder.expunge();
-                trashFolder.close(false);
-                inboxFolder.close(false);
-                store.close();
                 return true;
             }
 
-            trashFolder.close(false);
-            inboxFolder.close(false);
-            store.close();
             return false;
 
         } catch (Exception e) {
             e.printStackTrace();
             return false;
+        } finally {
+            try {
+                if (trashFolder != null && trashFolder.isOpen()) trashFolder.close(false);
+                if (inboxFolder != null && inboxFolder.isOpen()) inboxFolder.close(false);
+                if (store != null && store.isConnected()) store.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 }
