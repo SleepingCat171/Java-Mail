@@ -7,9 +7,9 @@ import java.io.InputStream;
 import java.util.Properties;
 
 public class EmailSender {
-    public static void sendEmail(String to, String subject, String messageText) {
+    public static boolean sendEmail(String to, String subject, String messageText) {
         Properties config = loadConfig();
-        if (config == null) return;
+        if (config == null) return false; // Return false if config loading fails
 
         final String username = config.getProperty("email");
         final String password = config.getProperty("password");
@@ -34,8 +34,10 @@ public class EmailSender {
             message.setText(messageText);
             Transport.send(message);
             System.out.println("Email sent successfully!");
+            return true; // Return true if email is sent successfully
         } catch (MessagingException e) {
             e.printStackTrace();
+            return false; // Return false if an exception occurs
         }
     }
 

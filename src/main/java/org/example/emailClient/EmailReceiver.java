@@ -52,8 +52,39 @@ public class EmailReceiver {
                 String subject = msg.getSubject();
                 String date = msg.getSentDate() != null ? msg.getSentDate().toString() : "Unknown";
                 String content = getTextFromMessage(msg);
-                emailList.add(new EmailData(from, subject, date, content));
-                emailSummaries.add(new String[]{from, subject, date});
+                EmailData email = new EmailData(from, subject, date, content);
+
+                // Check if the email is spam
+                boolean isSpam = SpamDetector.isSpam(email);
+                email.setSpam(isSpam);
+                if (isSpam && !folderName.equals("Spam")) {
+                    // Simply mark it for now, actual moving is complex and would require another method
+                    // This ensures spam is visually indicated in the UI
+                    // Mark the email as spam in the UI
+                    email.setSpam(true);
+
+                    // Attempt to move the email to the "Spam" folder
+                    try {
+                        Folder spamFolder = store.getFolder("Spam");
+                        if (!spamFolder.exists()) {
+                            spamFolder.create(Folder.HOLDS_MESSAGES);
+                        }
+                        spamFolder.open(Folder.READ_WRITE);
+
+                        // Move message to Spam folder
+                        folder.copyMessages(new Message[]{msg}, spamFolder);
+                        msg.setFlag(Flags.Flag.DELETED, true);
+
+                        spamFolder.close(true); // Expunge messages marked as deleted
+                    } catch (MessagingException e) {
+                        System.out.println("Failed to move email to Spam folder: " + e.getMessage());
+                    }
+                }
+                emailList.add(email);
+
+                // Add indicator for spam emails in the summary
+                String fromDisplay = isSpam ? "[SPAM] " + from : from;
+                emailSummaries.add(new String[]{fromDisplay, subject, date});
             }
 
             folder.close(false);
@@ -125,4 +156,5 @@ public class EmailReceiver {
             return null;
         }
     }
+
 }
